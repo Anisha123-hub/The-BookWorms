@@ -1,10 +1,10 @@
 import React, { useContext, useState } from 'react'
+import { Context } from '../context/SharedState'
+import { useNavigate } from 'react-router-dom'
+import { toast } from 'react-toastify';
 import '../css/starter.css'
 import '../css/footer.css'
 import axios from 'axios';
-import { Context } from '../context/SharedState'
-import { useNavigate } from 'react-router-dom'
-import { Bounce, Slide, toast } from 'react-toastify';
 
 export default function Login() {
 
@@ -19,7 +19,6 @@ export default function Login() {
             ...userInput,
             [name]: value
         })
-        console.log(userInput)
     }
 
     const handleLogin = (e) => {

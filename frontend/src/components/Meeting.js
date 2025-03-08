@@ -1,37 +1,113 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
-import axios from 'axios';
+import { useNavigate, useParams } from 'react-router-dom';
 import { Context } from '../context/SharedState';
-import { Bounce, toast } from 'react-toastify';
+import { Bounce, Slide, toast } from 'react-toastify';
+import axios from 'axios';
+import Chatbox from './Chatbox';
+import Members from './Members';
 
 export default function Meeting() {
     const states = useContext(Context)
     const { bookId } = useParams();
+
+    // Storing a specific book details
     const [book, setBook] = useState(null);
-    const [loading, setLoading] = useState(true);
+
+    // Storing whether the user is member or not
+    const [isMember, setIsMember] = useState(false);
+
+    // Storing the total number of members
+    const [memberCount, setMemberCount] = useState(0);
+
+    // Storing all the chats, reviews and rating input of a book
     const [reviewDesc, setReviewDesc] = useState('');
+    const [rating, setRating] = useState(null);
     const [chatText, setChatText] = useState('');
 
     useEffect(() => {
-        // Fetch the book details and reviews from MongoDB
-        const fetchBookDetails = async () => {
-            try {
-                const bookResponse = await axios.get(states.hostname + `/api/book/${bookId}`);
-                setBook(bookResponse.data.book);
-                setLoading(false);
-            } catch (error) {
-                console.error("Error fetching book details", error);
-                setLoading(false);
-            }
-        };
+        const bookData = states.books.find(book => book._id === bookId);
 
-        fetchBookDetails();
-    }, [bookId]);
+        if (bookData) {
+            setBook(bookData);
+            setMemberCount(bookData.members.length);
+
+            setIsMember(bookData.members.some(member => member.userId.toString() === states.user._id));
+        }
+    }, [book, bookId, states.books, states.user._id]);
+
+
+    const handleJoinClub = async () => {
+        axios.post(states.hostname + "/api/book/joinclub", { bookId }).then((res) => {
+            toast.success(res.data.message, {
+                position: "top-right",
+                autoClose: 5000,
+                hideProgressBar: false,
+                closeOnClick: false,
+                pauseOnHover: true,
+                draggable: true,
+                progress: undefined,
+                theme: "dark",
+                transition: Bounce,
+            });
+            setIsMember(true);
+            setReviewDesc('');
+
+        }).catch((error) => {
+            console.log(error);
+            toast.error(error.response.data.message, {
+                position: "top-right",
+                autoClose: 5000,
+                hideProgressBar: false,
+                closeOnClick: false,
+                pauseOnHover: true,
+                draggable: true,
+                progress: undefined,
+                theme: "dark",
+                transition: Bounce,
+            });
+            setReviewDesc('');
+        });
+    };
+
+    const handleLeaveClub = async () => {
+        axios.post(states.hostname + "/api/book/leaveclub", { bookId }).then((res) => {
+            toast.warning(res.data.message, {
+                position: "top-right",
+                autoClose: 5000,
+                hideProgressBar: false,
+                closeOnClick: false,
+                pauseOnHover: true,
+                draggable: true,
+                progress: undefined,
+                theme: "dark",
+                transition: Bounce,
+            });
+            setIsMember(false);
+            setReviewDesc('');
+            // Update state
+            states.setBooks(prevBooks => prevBooks.filter(book => book._id !== bookId));
+
+        }).catch((error) => {
+            console.log(error);
+            toast.error(error.response.data.message, {
+                position: "top-right",
+                autoClose: 5000,
+                hideProgressBar: false,
+                closeOnClick: false,
+                pauseOnHover: true,
+                draggable: true,
+                progress: undefined,
+                theme: "dark",
+                transition: Bounce,
+            });
+            setReviewDesc('');
+        });
+    };
 
     const handleSubmitReview = () => {
         axios.post(states.hostname + "/api/book/addreview", {
             userId: states.user._id, username: states.user.username,
-            bookId: bookId, reviewDesc: reviewDesc
+            bookId: bookId, reviewDesc: reviewDesc, rating: rating
         }).then((res) => {
             toast.success(res.data.message, {
                 position: "top-center",
@@ -39,13 +115,15 @@ export default function Meeting() {
                 hideProgressBar: false,
                 closeOnClick: false,
                 pauseOnHover: true,
-                draggable: true, 
+                draggable: true,
                 progress: undefined,
                 theme: "dark",
                 transition: Bounce,
             });
-            window.location.reload();
             setReviewDesc('')
+            setRating(null)
+            window.location.reload()
+
         }).catch((error) => {
             console.log(error.response)
             toast.error(error.response.data.message, {
@@ -60,6 +138,8 @@ export default function Meeting() {
                 transition: Bounce,
             });
             setReviewDesc('')
+            setRating(null)
+
         })
     }
 
@@ -79,7 +159,6 @@ export default function Meeting() {
                 theme: "dark",
                 transition: Bounce,
             });
-            window.location.reload()
             setReviewDesc('')
         }).catch((error) => {
             console.log(error.response)
@@ -98,7 +177,7 @@ export default function Meeting() {
         })
     }
 
-    if (loading) {
+    if (states.loading) {
         return <div>Loading...</div>;
     }
 
@@ -108,12 +187,34 @@ export default function Meeting() {
 
     return (
         <main className="container-xxl">
+            <Members bookData={book} memberCount={memberCount}/>
             <img src="/images/orange vector2.png" id="ovecsix" />
             <img src="/images/purplevectortwo.png" id="pvecseven" />
-            <article className="col-sm-12 col-md-12 flex-lg-column mx-auto align-items-start justify-content-start mb-2" id="Current">
-                <div className="col-12 titlebanner">
+            <article className="col-sm-12 col-md-12 flex-lg-column" id="Current">
+                <div style={{ backgroundColor: 'rgb(254,172,94)' }}>
                     <br />
-                    <h1 className="my-2 mx-2 pb-4 ps-4 text-white">{book.title}</h1>
+                    <div className='d-flex justify-content-between align-items-center w-100' >
+                        <div>
+                            <h1 className="my-2 mx-2 pb-4 ps-4 text-white">{book.title}</h1>
+                        </div>
+
+                        <div>
+                            <div>
+                                <div>
+                                    {isMember ? (
+                                        <div className="me-4 btn btn-danger text-light" onClick={handleLeaveClub}>- Leave Club</div>
+                                    ) : (
+                                        <div className="me-4 btn btn-success text-light" onClick={handleJoinClub}>+ Join Club</div>
+                                    )}
+                                    <div className="me-4 mt-2 nav-link btn"
+                                        onClick={states.toggleModal} style={{ cursor: 'pointer' }}>
+                                        {memberCount} Members
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 <div className="container-xxl">
                     <div className="row justify-content-center align-items-start my-5 mx-4 pb-3" id="meetingbox">
@@ -121,7 +222,7 @@ export default function Meeting() {
                             <div className="col-lg-3 col-md-8 col-sm-8" id="meetingOne">
                                 <div>
                                     <div className="oneOne">
-                                        <img src={book.imgSrc} style={{ width: '60%' }} alt={book.title} />
+                                        <img src={book.imgSrc} style={{ width: '70%' }} alt={book.title} />
                                     </div>
                                     <div className="oneTwo">
                                         <p><b>Summary</b>: {book.description}</p>
@@ -138,7 +239,18 @@ export default function Meeting() {
 
 
                             <div className="col-lg-3 col-md-8 col-sm-8">
-                                <h4>Reviews ({book.reviews.length})</h4>
+                                <h4 className='fw-bold'>Total Reviews ({book?.reviews.length})</h4>
+
+                                <h6 className='d-flex align-items-center'>
+                                    <span class="material-symbols-outlined me-1">sentiment_satisfied</span>
+                                    Positive reviews ({book?.reviews?.filter(review => review.rating >= 4).length})
+                                </h6>
+
+                                <h6 className='d-flex align-items-center'>
+                                    <span class="material-symbols-outlined me-1">sentiment_dissatisfied</span>
+                                    Negative reviews ({book?.reviews?.filter(review => review.rating <= 3).length})
+                                </h6>
+
                                 <div class="d-flex justify-content-start flex-column">
                                     <a href={book.buy_link} target="_blank"><button class="btn text-white mb-2">Buy on Amazon</button></a>
                                     <a href="https://www.amazon.in/hz/wishlist/intro" target="_blank"><button class="btn">Add to Wishlist</button></a>
@@ -172,61 +284,15 @@ export default function Meeting() {
                     </div>
                 </div>
             </article>
-            <div class="container-fluid mt-5" id="discussionpanel">
+            <div class="container-fluid mt-5 mb-5" id="discussionpanel">
                 <div class="row">
-                    <div class="col-sm-12 col-md-12 col-lg-4 col-xl-4 col-xxl-4" id="livechat">
-                        <div class="row">
-                            <div class="col-12 text-white bg-primary text-center p-3">
-                                <h2>Chat feed</h2>
-                            </div>
-                        </div>
-                        <div class="row" id="chatdisclosure">
-                            <div class="col-12 text-secondary text-center">
-                                <p><b><span class="text-danger">***ALERT***</span></b><br /> This is a public live discussion that may include spoilers.</p>
 
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div data-bs-spy="scroll" data-bs-target="#navbar-example2" data-bs-offset="0" class="scrollspy-examplethree" tabindex="0"
-                                style={{ height: '420px' }}>
-                                <div class="col-12 p-0" id="chatbox">
-                                    <ul id="unordered">
-                                        <li>What do you think of the book everyone?</li>
+                    <Chatbox book={book}
+                        isMember={isMember}
+                        handleChat={handleChat}
+                        chatText={chatText}
+                        setChatText={setChatText} />
 
-                                        {book.chats.map((chat) => (
-                                            <li key={chat.id}>
-                                                <div className="mt-3">
-                                                    <div className="d-flex justify-content-start align-items-center">
-                                                        <img className='me-2' src="https://static.vecteezy.com/system/resources/previews/009/267/048/non_2x/user-icon-design-free-png.png" height={30} />
-                                                        <span>{chat.username} ({new Date(chat.createdAt).toLocaleTimeString('en-US', {
-                                                            hour: '2-digit',
-                                                            minute: '2-digit',
-                                                            hour12: true
-                                                        })})</span>
-                                                    </div>
-                                                    <p className='mt-2 fw-bold'>{chat.chatText}</p>
-                                                    <hr />
-                                                </div>
-                                            </li>
-                                        ))}
-
-                                    </ul>
-                                </div>
-                            </div>
-                            <div class="col-12" id="comment-box-holder">
-                                <div className='row p-2 align-items-center'>
-
-                                    <div className='col-9'>
-                                        <input class="form-control" type="text" placeholder="Write a message" value={chatText} onChange={(e) => setChatText(e.target.value)} />
-                                    </div>
-
-                                    <div className='col-2'>
-                                        <button id="poston" type="button" class="btn btn-primary btn-sm text-white" onClick={handleChat}>Send Message</button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
                     <div class="col-sm-0 col-md-0 col-lg-1 col-xl-1 col-xxl-1"></div>
                     <div class="col-sm-12 col-md-12 col-lg-7 col-xl-7 col-xxl-7">
                         <div class="row">
@@ -240,49 +306,83 @@ export default function Meeting() {
                                             <div data-bs-spy="scroll" data-bs-target="#navbar-example2" data-bs-offset="0" class="scrollspy-examplethree" tabindex="0">
 
                                                 <ul>
-                                                    {book.reviews.map((review) => (
-                                                        <li key={review.id}>
-                                                            <div className="col-12" id="reviewbg">
-                                                                <div className="row">
-
-                                                                    <div className="col-1">
-                                                                        <img src="https://static.vecteezy.com/system/resources/previews/009/267/048/non_2x/user-icon-design-free-png.png" alt="User" id="userOne" />
-                                                                    </div>
-                                                                    <div className="col-11">
-                                                                        <div className="col-12" id="usernameandrate">
-                                                                            <span>{review.username}</span>
-                                                                            <p>{new Date(review.createdAt).toLocaleDateString('en-US', {
-                                                                                year: 'numeric',
-                                                                                month: 'short',
-                                                                                day: 'numeric',
-                                                                            })}</p>
+                                                    {[...book.reviews] // Create a shallow copy to avoid mutating the original state
+                                                        .sort((a, b) => b.rating - a.rating) // Sort in descending order of rating
+                                                        .map((review) => (
+                                                            <li key={review.id}>
+                                                                <div className="col-12" id="reviewbg">
+                                                                    <div className="row">
+                                                                        <div className="col-1">
+                                                                            <img src="https://static.vecteezy.com/system/resources/previews/009/267/048/non_2x/user-icon-design-free-png.png" alt="User" id="userOne" />
                                                                         </div>
-
+                                                                        <div className="col-11">
+                                                                            <div className="col-12" id="usernameandrate">
+                                                                                <span className='fw-bold'>{review.username}</span>
+                                                                                <p>{new Date(review.createdAt).toLocaleDateString('en-US', {
+                                                                                    year: 'numeric',
+                                                                                    month: 'short',
+                                                                                    day: 'numeric',
+                                                                                })}</p>
+                                                                            </div>
+                                                                        </div>
                                                                     </div>
-                                                                </div>
-                                                                <div className="row">
-                                                                    <div className="col-12">
-                                                                        <br />
-                                                                        <p>{review.reviewDesc}</p>
+                                                                    <div className="rating d-flex">
+                                                                        {[5, 4, 3, 2, 1].map((rating) => (
+                                                                            <React.Fragment key={rating}>
+                                                                                <input
+                                                                                    type="radio"
+                                                                                    checked={rating === review.rating}
+                                                                                    disabled
+                                                                                />
+                                                                                <label title={`Rating ${rating}`}></label>
+                                                                            </React.Fragment>
+                                                                        ))}
                                                                     </div>
+                                                                    <p>{review.reviewDesc}</p>
                                                                 </div>
                                                                 <hr className='w-75' />
-                                                            </div>
-                                                        </li>
-                                                    ))}
+                                                            </li>
+                                                        ))
+                                                    }
+
                                                 </ul>
 
                                             </div>
                                             <div class="col-12" id="comment-box-holder">
-                                                <div className='row p-2 align-items-center'>
+                                                <div className='row p-2 align-items-center justify-content-start'>
 
-                                                    <div className='col-10'>
-                                                        <input class="form-control" type="text" placeholder="Write a message" value={reviewDesc} onChange={(e) => setReviewDesc(e.target.value)} />
-                                                    </div>
-
-                                                    <div className='col-2'>
-                                                        <button id="poston" class="btn btn-primary btn-sm text-white" onClick={handleSubmitReview}>Submit Review</button>
-                                                    </div>
+                                                    {isMember ?
+                                                        <>
+                                                            <div className='col-10'>
+                                                                <div className="rating">
+                                                                    {[5, 4, 3, 2, 1].map((value) => (
+                                                                        <React.Fragment key={value}>
+                                                                            <input
+                                                                                value={value}
+                                                                                name={`rate-${value}`}
+                                                                                id={`star${value}`}
+                                                                                type="radio"
+                                                                                checked={rating === value}
+                                                                                onChange={() => setRating(value)}
+                                                                            />
+                                                                            <label title={`Rate ${value}`} htmlFor={`star${value}`}></label>
+                                                                        </React.Fragment>
+                                                                    ))}
+                                                                </div>
+                                                                <input class="form-control" type="text" placeholder="Write a review" value={reviewDesc} onChange={(e) => setReviewDesc(e.target.value)} />
+                                                            </div>
+                                                            <div className='col-2'>
+                                                                <button id="poston" class="btn btn-primary btn-sm text-white" onClick={handleSubmitReview}>Submit Review</button>
+                                                            </div>
+                                                        </> :
+                                                        <>
+                                                            <div className='col-10'>
+                                                                <input class="form-control" type="text" placeholder="Only Members can write the review" disabled />
+                                                            </div>
+                                                            <div className='col-2'>
+                                                                <button id="poston" class="btn btn-danger btn-sm text-white" disabled>Members Only</button>
+                                                            </div>
+                                                        </>}
                                                 </div>
                                             </div>
                                         </div>

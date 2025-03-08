@@ -36,7 +36,7 @@ export default function Signup() {
 
             } else {
                 toast.error(res.data.message, {
-                    position: "top-right",
+                    position: "bottom-right",
                     autoClose: 2000,
                     hideProgressBar: false,
                     closeOnClick: true,
@@ -65,31 +65,30 @@ export default function Signup() {
 
                                 <div class="mb-3">
                                     <label class="form-label">Username</label>
-                                    <input name="username" type="username" class="form-control" onChange={handleInput}/>
+                                    <input name="username" type="username" class="form-control" onChange={handleInput} required/>
                                 </div>
                                 <div class="mb-3">
                                     <label class="form-label">Email address</label>
-                                    <input name="email" type="email" class="form-control" onChange={handleInput}/>
+                                    <input name="email" type="email" class="form-control" onChange={handleInput} required/>
                                     <div id="emailHelp" class="form-text">
                                         We'll never share your email with anyone else.
                                     </div>
                                 </div>
                                 <div class="mb-3">
                                     <label class="form-label">Phone Number</label>
-                                    <input name="phone" type="phone" class="form-control" onChange={handleInput}/>
+                                    <input name="phone" type="phone" class="form-control" onChange={handleInput} required/>
                                 </div>
 
                                 <div class="mb-3">
                                     <label class="form-label">Password</label>
-                                    <input name="password" type="password" class="form-control" onChange={handleInput}/>
+                                    <input name="password" type="password" class="form-control" onChange={handleInput} required/>
                                 </div>
 
                                 <div class="text-center">
                                     <button type="submit" class="btn btn-warning text-white text-decoration-none mb-1 mt-2">Create Account</button>
                                 </div>
                                 <p class="text-center pt-3 mb-1">
-                                    Already have an account?
-                                    <Link to='/login'><span class="text-primary">Log In</span></Link>
+                                    Already have an account? <Link to='/login'><span class="text-primary">Log In</span></Link>
                                 </p>
                             </form>
                         </div>

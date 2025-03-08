@@ -1,8 +1,8 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Context } from '../context/SharedState';
-import axios from 'axios';
 import { Slide, toast } from 'react-toastify';
+import axios from 'axios';
 
 export default function Navbar() {
     const states = useContext(Context);
@@ -68,9 +68,15 @@ export default function Navbar() {
                         </li>
                         {location.pathname.includes('/join') ? "" :
                             <li className="nav-item">
-                                <Link to="/join" className="nav-link me-3">Join Clubs</Link>
+                                <Link to="/join" className="nav-link me-2">Join Clubs</Link>
                             </li>
                         }
+                        {states.user.role === 'admin' && !location.pathname.includes('/admin') ? 
+                            <li className="nav-item">
+                                <Link to="/admin" className="nav-link me-3 text-success">Add new books</Link>
+                            </li>: ""
+                        }
+                        
                     </ul>
                     <form className="d-flex">
                         <input
@@ -90,6 +96,11 @@ export default function Navbar() {
                             {location.pathname.includes('/profile') ? "" :
                                 <li className="nav-item">
                                     <Link to="/profile" className="nav-link">{states.user.username}</Link>
+                                </li>
+                            }
+                            {location.pathname.includes('/clubs') ? "" :
+                                <li className="nav-item">
+                                    <Link to="/clubs" className="nav-link">My Clubs</Link>
                                 </li>
                             }
                             <li className="nav-item">

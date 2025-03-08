@@ -6,17 +6,24 @@ const bookSchema = new mongoose.Schema({
     genre: String,
     author: String,
     author_img: String,
+    members: [
+        {
+            userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+            username: String
+        }
+    ],
     reviews: [
         {
-            userId: mongoose.Schema.Types.ObjectId,
+            userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
             username: String,
             reviewDesc: String,
+            rating: Number,
             createdAt: { type: Date, default: Date.now }
         }
     ],
     chats: [
         {
-            userId: mongoose.Schema.Types.ObjectId,
+            userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
             username: String,
             chatText: String,
             createdAt: { type: Date, default: Date.now }

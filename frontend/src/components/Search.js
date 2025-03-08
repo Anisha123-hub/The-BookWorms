@@ -13,7 +13,7 @@ export default function Search() {
         }
     }, [states.searchTerm, navigate]);
 
-    const filteredBooks = states.books.filter((book) =>
+    const filteredBooks = states.books?.filter((book) =>
         book.title.toLowerCase().includes(states.searchTerm.toLowerCase())
     );
 
@@ -23,15 +23,15 @@ export default function Search() {
                 <h4 className="mb-4">Search Results for "{states.searchTerm}"</h4>
             )}
             <div className="row">
-                {filteredBooks.length > 0 ? (
+                {filteredBooks?.length > 0 ? (
                     filteredBooks.map((book) => (
-                        <div key={book._id} className="col-md-4">
-                            <Link to={`/meeting/` + book._id}>
+                        <div key={book._id} className="col-md-3 m-auto">
+                            <Link to={`/meeting/` + book._id} className='text-decoration-none'>
                                 <div className="card mb-4">
-                                    <img src={book.imgSrc} className="card-img-top" alt={book.title} />
+                                    <img src={book.imgSrc} className="card-img-top" alt={book.title}/>
                                     <div className="card-body">
-                                        <h5 className="card-title">{book.title}</h5>
-                                        <p className="card-text">{book.description}</p>
+                                        <h5 className="card-title fw-bold">{book.title}</h5>
+                                        <p className="card-text text-muted">{book.genre}</p>
                                     </div>
                                 </div>
                             </Link>

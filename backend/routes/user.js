@@ -85,6 +85,18 @@ router.get('/all', Authenticated, async (req, res) => {
     }
 })
 
+// ROUTER 5: Update a specific user profile
+router.put('/update', Authenticated, async (req, res) => {
+    const { userId, phone } = req.body
+    try {
+        const updateUser = await userDataModel.findByIdAndUpdate(userId, {phone: phone })
+        res.json({message: "Profile has been updated", success: true})
+
+    } catch (error) {
+        res.json(error.message)
+    }
+})
+
 // ROUTER 5: Logout (Clear serverside cookies)
 router.get('/logout', Authenticated, async (req, res) => {
     try {
@@ -102,10 +114,27 @@ router.get('/logout', Authenticated, async (req, res) => {
     }
 })
 
+// ROUTER 6: Delete Profile or User
+router.delete('/delete', Authenticated, async (req, res) => {
+    const {userId} = req.body
+    try {
+        res.cookie('_xz', '', {
+            sameSite: 'strict',
+            httpOnly: true,
+            path: '/',
+            secure: false,
+            expires: new Date(0)
+        });
+        await userDataModel.findByIdAndDelete(userId)
 
+        res.json({ message: "Account Deleted Permanently", success: true })
 
+    } catch (error) {
+        res.json(error.message)
+    }
+})
 
-// ROUTER 6: Admin-Login
+// ROUTER 7: Admin-Login
 router.post('/login/admin', async (req, res) => {
 
     const { email, password } = req.body;
